@@ -1,0 +1,14 @@
+.menu-second li a{
+    background-color: #f6f6f6;
+    padding-left: 40px;
+
+}
+
+.panel-body{
+	overflow:hidden
+}
+
+.panel-header, .panel-body {
+    border-width: 1px;
+    border-style: none; 
+}

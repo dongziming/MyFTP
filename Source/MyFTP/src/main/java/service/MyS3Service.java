@@ -27,16 +27,14 @@ import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 @Service("myS3Service")
 public class MyS3Service {
-	public Boolean uploadObject(CommonsMultipartFile file,String path, S3Service s3Service,
-			String bucketName) {
-		File destFile = new File(path);
+	public Boolean uploadObject(CommonsMultipartFile file, S3Service s3Service,
+			String bucketName,String fileName) {
 		try {
-			// FileUtils.copyInputStreamToFile()这个方法里对IO进行了自动操作，不需要额外的再去关闭IO流
-			FileUtils.copyInputStreamToFile(file.getInputStream(), destFile);// 复制临时文件到指定目录下
 			// start upload file to S3
 //			File fileData = new File(path);
 			// Create an empty object with a key/name, and print the object’s details.
-			S3Object fileObject = new S3Object(destFile);
+//			S3Object fileObject = new S3Object(destFile);
+			S3Object fileObject = new S3Object(fileName,file.getBytes());
 			//System.out.println("S3Object before upload: " + fileObject);
 			// Upload the object to our test bucket in S3.
 			s3Service.putObject(bucketName, fileObject);
@@ -73,6 +71,7 @@ public class MyS3Service {
 			HttpServletResponse response) throws Exception {
 		// Retrieve the HEAD of the data object we created previously.
 		S3Object objectComplete = s3Service.getObject(bucketName, fileName);
+		System.out.println(objectComplete.getContentEncoding());
 		BufferedReader reader = new BufferedReader(new InputStreamReader(objectComplete.getDataInputStream(),"utf-8"));
 		String data = null;
 		response.setContentType("multipart/form-data");
@@ -80,6 +79,7 @@ public class MyS3Service {
 		response.setHeader("Content-Length", "" + objectComplete.getContentLength());
 		OutputStream out = response.getOutputStream();
 		while ((data = reader.readLine()) != null) {
+//			System.out.println(data);
 			out.write((data+"\n").getBytes());
 		}
 		out.close();

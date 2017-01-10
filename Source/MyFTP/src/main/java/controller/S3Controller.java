@@ -43,20 +43,22 @@ public class S3Controller {
 		return "fileManagement";
 	}
 	
+	@SuppressWarnings("finally")
 	@RequestMapping(value = "uploadobject", method = RequestMethod.POST)
 	public String uploadObject(@RequestParam("uploadfile") CommonsMultipartFile file, HttpServletRequest request) {
 		// MultipartFile是对当前上传的文件的封装，当要同时上传多个文件时，可以给定多个 MultipartFile参数(数组)
 		if (!file.isEmpty()) {
 			String fileName = file.getOriginalFilename();
 			try{
-				String path = request.getSession().getServletContext().getRealPath("/upload/" + fileName);
-				myS3Service.uploadObject(file, path, s3Service, bucketName);
+//				String path = request.getSession().getServletContext().getRealPath("/upload/" + fileName);
+				myS3Service.uploadObject(file, s3Service, bucketName,fileName);
+				result = "文件上传成功";
 			}catch(Exception e){
 				result = e.getMessage();
+			}
+			finally{
 				return "redirect:fileManagement.do";
 			}
-			result = "文件上传成功";
-			return "redirect:fileManagement.do";
 		} else {
 			result = "未添加上传的文件";
 			return "redirect:fileManagement.do";
@@ -69,18 +71,21 @@ public class S3Controller {
 		return myS3Service.getFiles(s3Service,bucketName);
 	}
 	
+	@SuppressWarnings("finally")
 	@RequestMapping(value="delete", method = RequestMethod.GET)
 	public String delete(String fileName, HttpServletRequest request){
 		try{
 			myS3Service.deleteObject(bucketName,fileName,s3Service);
+			result = "文件删除成功："+fileName;
 		}catch(Exception e){
 			result = e.getMessage();
+		}
+		finally{
 			return "redirect:fileManagement.do";
 		}
-		result = "文件删除成功："+fileName;
-		return "redirect:fileManagement.do";
 	}
 	
+	@SuppressWarnings("finally")
 	@RequestMapping(value="download", method = RequestMethod.GET)
 	public String downloadObject(@RequestParam("fileName") String fileName,HttpServletRequest request,
 			HttpServletResponse response){
@@ -88,8 +93,10 @@ public class S3Controller {
 			myS3Service.downloadObject(bucketName, fileName, s3Service,response);
 		}catch(Exception e){
 			result = e.getMessage();
-			return "redirect:fileManagement.do";
 		}
-		return "redirect:fileManagement.do";
+		finally{
+//			return "redirect:fileManagement.do";
+			return "fileManagement";
+		}
 	}
 }

@@ -1,19 +1,15 @@
 package controller;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import model.MyS3Object;
 
 import org.jets3t.service.S3Service;
-import org.jets3t.service.S3ServiceException;
-import org.jets3t.service.ServiceException;
 import org.jets3t.service.impl.rest.httpclient.RestS3Service;
-import org.jets3t.service.model.S3Object;
 import org.jets3t.service.security.AWSCredentials;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,9 +32,14 @@ public class S3Controller {
 	S3Service s3Service = new RestS3Service(awsCredentials);
 	String bucketName = "myftp001";
 	
+	String result = null;
 
 	@RequestMapping("/fileManagement.do")
-	public String fileManagement(){
+	public String fileManagement(HttpServletRequest request){
+		if(result!=null){
+			request.setAttribute("result", result);
+			result = null;
+		}
 		return "fileManagement";
 	}
 	
@@ -51,15 +52,14 @@ public class S3Controller {
 				String path = request.getSession().getServletContext().getRealPath("/upload/" + fileName);
 				myS3Service.uploadObject(file, path, s3Service, bucketName);
 			}catch(Exception e){
-				request.setAttribute("result", e.getMessage());
-				return "fileManagement";
+				result = e.getMessage();
+				return "redirect:fileManagement.do";
 			}
-			request.setAttribute("result", "文件上传成功");
-			
-			return "fileManagement";
+			result = "文件上传成功";
+			return "redirect:fileManagement.do";
 		} else {
-			request.setAttribute("result", "未添加上传的文件");
-			return "fileManagement";
+			result = "未添加上传的文件";
+			return "redirect:fileManagement.do";
 		}
 	}
 	
@@ -74,24 +74,22 @@ public class S3Controller {
 		try{
 			myS3Service.deleteObject(bucketName,fileName,s3Service);
 		}catch(Exception e){
-			request.setAttribute("result", e.getMessage());
-			return "fileManagement";
+			result = e.getMessage();
+			return "redirect:fileManagement.do";
 		}
-		request.setAttribute("result", "文件删除成功："+fileName);
-		return "fileManagement";
+		result = "文件删除成功："+fileName;
+		return "redirect:fileManagement.do";
 	}
 	
 	@RequestMapping(value="download", method = RequestMethod.GET)
-	public String downloadObject(@RequestParam("fileName") String fileName,HttpServletRequest request){
-		String localpath = "D:/awsDownload";
+	public String downloadObject(@RequestParam("fileName") String fileName,HttpServletRequest request,
+			HttpServletResponse response){
 		try{
-			myS3Service.downloadObject(bucketName, localpath, fileName, s3Service);
+			myS3Service.downloadObject(bucketName, fileName, s3Service,response);
 		}catch(Exception e){
-			request.setAttribute("result", e.getMessage());
-			return "fileManagement";
+			result = e.getMessage();
+			return "redirect:fileManagement.do";
 		}
-		request.setAttribute("result", "下载成功,下载位置："+localpath+"/"+fileName);
-		
-		return "fileManagement";
+		return "redirect:fileManagement.do";
 	}
 }

@@ -6,10 +6,14 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.URLEncoder;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.servlet.http.HttpServletResponse;
 
 import model.MyS3Object;
 
@@ -65,24 +69,20 @@ public class MyS3Service {
 		return list;
 	}
 
-	public void downloadObject(String bucketName, String localpath,
-			String fileName, S3Service s3Service) throws Exception {
-		File path = new File(localpath);
-		if(!path.exists()){
-			path.mkdirs();
-		}
-		FileWriter fw = new FileWriter(localpath+"/"+fileName);
-		BufferedWriter bw = new BufferedWriter(fw);
+	public void downloadObject(String bucketName,String fileName, S3Service s3Service,
+			HttpServletResponse response) throws Exception {
 		// Retrieve the HEAD of the data object we created previously.
 		S3Object objectComplete = s3Service.getObject(bucketName, fileName);
 		BufferedReader reader = new BufferedReader(new InputStreamReader(objectComplete.getDataInputStream(),"utf-8"));
 		String data = null;
+		response.setContentType("multipart/form-data");
+		response.setHeader("content-disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+		response.setHeader("Content-Length", "" + objectComplete.getContentLength());
+		OutputStream out = response.getOutputStream();
 		while ((data = reader.readLine()) != null) {
-			System.out.println(data);
-			bw.write(new String(data.getBytes())+"\n");
+			out.write((data+"\n").getBytes());
 		}
-		bw.close();
-		fw.close();
+		out.close();
 		reader.close();
 	}
 }

@@ -85,18 +85,13 @@ public class S3Controller {
 		}
 	}
 	
-	@SuppressWarnings("finally")
 	@RequestMapping(value="download", method = RequestMethod.GET)
-	public String downloadObject(@RequestParam("fileName") String fileName,HttpServletRequest request,
+	public void downloadObject(@RequestParam("fileName") String fileName,HttpServletRequest request,
 			HttpServletResponse response){
 		try{
 			myS3Service.downloadObject(bucketName, fileName, s3Service,response);
 		}catch(Exception e){
 			result = e.getMessage();
-		}
-		finally{
-//			return "redirect:fileManagement.do";
-			return "fileManagement";
 		}
 	}
 }
